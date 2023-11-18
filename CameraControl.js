@@ -1,4 +1,6 @@
-class CameraControl {
+import * as THREE from 'three';
+
+export class CameraControl {
 	constructor(camera, scene) {
 		this.camera = camera;
 		this.scene = scene;

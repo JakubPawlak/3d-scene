@@ -14,9 +14,14 @@
 		</style>
 	</head>
 	<body>
-		<script src="https://threejs.org/build/three.js"></script>
-		<script src="./CameraControl.js"></script>
-		<script src="./SceneSetup.js"></script>
-		<script src="./Main.js"></script>
+		<script type="importmap">
+			{
+				"imports": {
+					"three": "https://unpkg.com/three@0.158.0/build/three.module.js",
+					"three/addons/": "https://unpkg.com/three@0.158.0/examples/jsm/"
+				}
+			}
+		</script>
+		<script type="module" src="Main.js"></script>
 	</body>
 </html>
