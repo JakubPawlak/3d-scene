@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<title>3D Game</title>
+		<style>
+			body {
+				margin: 0;
+			}
+			canvas {
+				display: block;
+				cursor: none;
+			}
+		</style>
+	</head>
+	<body>
+		<script src="https://threejs.org/build/three.js"></script>
+		<script>
+			let scene, camera, renderer, cube;
+
+			// camera mouse movement
+			let isLocked = false;
+			let mouse = new THREE.Vector2();
+			let target = new THREE.Vector2();
+			let targetRotation = new THREE.Vector2();
+
+			// arrows movement
+			let moveForward = false;
+			let moveBackward = false;
+			let moveLeft = false;
+			let moveRight = false;
+			const velocity = new THREE.Vector3();
+			const direction = new THREE.Vector3();
+
+			let yawObject, pitchObject;
+
+			function init() {
+				// camera mouse movement
+				document.addEventListener('mousemove', onMouseMove, false);
+				document.addEventListener('click', onClick, false);
+
+				// arrows movement
+				document.addEventListener('keydown', onKeyDown, false);
+				document.addEventListener('keyup', onKeyUp, false);
+
+				// Create the scene
+				scene = new THREE.Scene();
+
+				// Create and position the camera
+				camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+				camera.position.z = 5;
+
+				// Create the renderer and attach it to the DOM
+				renderer = new THREE.WebGLRenderer();
+				renderer.setSize(window.innerWidth, window.innerHeight);
+				document.body.appendChild(renderer.domElement);
+
+				// Add a cube
+				const geometry = new THREE.BoxGeometry();
+				const material = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
+				cube = new THREE.Mesh(geometry, material);
+				scene.add(cube);
+
+				// Add plane code starts here
+				const planeGeometry = new THREE.PlaneGeometry(10, 10); // Adjust size as needed
+				const planeMaterial = new THREE.MeshLambertMaterial({ color: 0x808080, side: THREE.DoubleSide });
+				const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+				plane.rotation.x = -Math.PI / 2; // Rotate the plane to be horizontal
+				plane.position.y = -2; // Adjust height to place it below the cube
+				scene.add(plane);
+				// Add plane code ends here
+
+				cube.position.y = 1; // Adjust as needed
+
+				// Add ambient light
+				const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+				scene.add(ambientLight);
+
+				// Add directional light
+				const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+				directionalLight.position.set(0, 1, 0); // Adjust the position as needed
+				scene.add(directionalLight);
+
+				// Initialize yawObject and pitchObject
+				yawObject = new THREE.Object3D();
+				pitchObject = new THREE.Object3D();
+				camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+				yawObject.add(pitchObject);
+				pitchObject.add(camera);
+
+				scene.add(yawObject);
+				// Handle window resize
+				window.addEventListener('resize', onWindowResize, false);
+
+				// Start the animation loop
+				animate();
+			}
+
+			function animate() {
+				requestAnimationFrame(animate);
+
+				const delta = 0.01; // Speed of movement
+
+				// Calculate the forward and right vectors
+				const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(yawObject.quaternion);
+				const right = new THREE.Vector3(1, 0, 0).applyQuaternion(yawObject.quaternion);
+
+				// Reset velocity
+				velocity.x -= velocity.x * 10.0 * delta;
+				velocity.z -= velocity.z * 10.0 * delta;
+
+				// Set direction based on key states
+				direction.z = Number(moveForward) - Number(moveBackward);
+				direction.x = Number(moveRight) - Number(moveLeft);
+				direction.normalize();
+
+				// Apply movement
+				if (moveForward || moveBackward) velocity.addScaledVector(forward, -direction.z * 400.0 * delta);
+				if (moveLeft || moveRight) velocity.addScaledVector(right, direction.x * 400.0 * delta);
+
+				// Update camera position
+				yawObject.position.addScaledVector(velocity, delta);
+
+				renderer.render(scene, camera);
+			}
+
+			function onWindowResize() {
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize(window.innerWidth, window.innerHeight);
+			}
+
+			function onMouseMove(event) {
+				if (!isLocked) return;
+
+				const movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
+				const movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
+
+				yawObject.rotation.y -= movementX * 0.002;
+				pitchObject.rotation.x -= movementY * 0.002;
+				pitchObject.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitchObject.rotation.x));
+			}
+			function onClick() {
+				if (document.pointerLockElement === document.body) {
+					isLocked = false;
+					document.exitPointerLock();
+				} else {
+					document.body.requestPointerLock();
+					isLocked = true;
+				}
+			}
+
+			function onKeyDown(event) {
+				switch (event.code) {
+					case 'ArrowDown':
+					case 'KeyS':
+						moveForward = true;
+						break;
+					case 'ArrowLeft':
+					case 'KeyA':
+						moveLeft = true;
+						break;
+					case 'ArrowUp':
+					case 'KeyW':
+						moveBackward = true;
+						break;
+					case 'ArrowRight':
+					case 'KeyD':
+						moveRight = true;
+						break;
+				}
+			}
+
+			function onKeyUp(event) {
+				switch (event.code) {
+					case 'ArrowDown':
+					case 'KeyS':
+						moveForward = false;
+						break;
+					case 'ArrowLeft':
+					case 'KeyA':
+						moveLeft = false;
+						break;
+					case 'ArrowUp':
+					case 'KeyW':
+						moveBackward = false;
+						break;
+					case 'ArrowRight':
+					case 'KeyD':
+						moveRight = false;
+						break;
+				}
+			}
+
+			init();
+		</script>
+	</body>
+</html>
